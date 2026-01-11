@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI & Quick Professional Terms</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=Crimson+Pro:wght@400;600&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', sans-serif;
+        }
+        
+        body {
+            min-height: 100vh;
+            background: linear-gradient(to bottom right, #f8fafc, #eff6ff, #faf5ff);
+        }
+        
+        .flashcard {
+            perspective: 1000px;
+        }
+        
+        .flashcard-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+        }
+        
+        .flashcard-flipped .flashcard-inner {
+            transform: rotateY(180deg);
+        }
+        
+        .flashcard-front,
+        .flashcard-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 24px;
+            padding: 2.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .flashcard-back {
+            transform: rotateY(180deg);
+        }
+        
+        .flag-animation {
+            animation: wave 3s ease-in-out infinite;
+            transform-origin: left center;
+        }
+        
+        @keyframes wave {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(5deg); }
+            75% { transform: rotate(-5deg); }
+        }
+        
+        .completed-flag {
+            animation: raise 1s ease-out forwards;
+        }
+        
+        @keyframes raise {
+            from { transform: translateY(100px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .btn-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .btn-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+        
+        .card-enter {
+            animation: cardEnter 0.4s ease-out;
+        }
+        
+        @keyframes cardEnter {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .term-font {
+            font-family: 'Crimson Pro', serif;
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .diagonal-container {
+            transform: rotate(-2deg);
+            transition: transform 0.3s ease;
+        }
+
+        .diagonal-card {
+            transform: rotate(2deg);
+        }
+
+        .bounce-emoji {
+            animation: bounce 2s ease-in-out infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .spin-emoji {
+            animation: spin 3s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .pulse-emoji {
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        .float-emoji {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-15px) rotate(5deg); }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState } = React;
+
+        const AIQuickProfessionalTerms = () => {
+            const [currentAIIndex, setCurrentAIIndex] = useState(0);
+            const [currentProfIndex, setCurrentProfIndex] = useState(0);
+            const [isAIFlipped, setIsAIFlipped] = useState(false);
+            const [isProfFlipped, setIsProfFlipped] = useState(false);
+            const [studiedCards, setStudiedCards] = useState({ ai: new Set(), professional: new Set() });
+
+            const aiTerms = [
+                { term: "Artificial Intelligence (AI)", definition: "The simulation of human intelligence processes by machines, especially computer systems, including learning, reasoning, and self-correction.", realLife: "When you ask Siri or Alexa a question, AI processes your voice, understands the intent, searches for information, and responds in natural language - all within seconds." },
+                { term: "Machine Learning (ML)", definition: "A subset of AI that enables systems to learn and improve from experience without being explicitly programmed, using algorithms that iteratively learn from data.", realLife: "Netflix uses ML to analyze your viewing history and predict which shows you'll enjoy, continuously improving its recommendations as you watch more content." },
+                { term: "Deep Learning", definition: "A subset of machine learning based on artificial neural networks with multiple layers, capable of learning hierarchical representations of data.", realLife: "When your smartphone camera automatically detects and focuses on faces, deep learning analyzes the image through multiple layers to identify facial features with high accuracy." },
+                { term: "Neural Network", definition: "A computing system inspired by biological neural networks, consisting of interconnected nodes (neurons) that process information in layers to recognize patterns and make decisions.", realLife: "Gmail's spam filter uses neural networks to learn from millions of emails, identifying spam patterns and protecting your inbox by recognizing suspicious sender behavior and content." },
+                { term: "Natural Language Processing (NLP)", definition: "A branch of AI focused on enabling computers to understand, interpret, and generate human language in a valuable and meaningful way.", realLife: "Google Translate uses NLP to convert text from one language to another by understanding context, idioms, and grammar rules, making cross-language communication accessible to billions." },
+                { term: "Large Language Model (LLM)", definition: "A type of neural network trained on massive amounts of text data, capable of understanding and generating human-like text across diverse topics and tasks.", realLife: "ChatGPT and Claude are LLMs that can write essays, debug code, summarize articles, and answer questions because they've learned patterns from billions of text examples across the internet." },
+                { term: "Prompt Engineering", definition: "The practice of designing and refining input prompts to optimize AI model outputs, involving strategic word choice, context provision, and instruction formatting.", realLife: "Instead of asking 'Write about dogs,' a prompt engineer writes 'Write a 300-word informative article about Golden Retrievers for first-time dog owners, focusing on temperament and care needs' to get precise, useful results." },
+                { term: "Fine-tuning", definition: "The process of taking a pre-trained model and training it further on a specific dataset to adapt it for a particular task or domain.", realLife: "A hospital fine-tunes a general medical AI model with their own patient records and protocols, making it better at diagnosing conditions specific to their patient population." },
+                { term: "Transfer Learning", definition: "A machine learning technique where a model developed for one task is reused as the starting point for a model on a second, related task.", realLife: "An AI trained to recognize cats and dogs can be adapted to identify different breeds of cats by reusing its knowledge of feline features, saving training time and data." },
+                { term: "Supervised Learning", definition: "A type of machine learning where the algorithm learns from labeled training data, making predictions or decisions based on input-output pairs.", realLife: "Email systems learn to classify emails as 'spam' or 'not spam' by training on thousands of pre-labeled emails, then apply this knowledge to automatically filter your inbox." },
+                { term: "Unsupervised Learning", definition: "A type of machine learning that finds hidden patterns or structures in unlabeled data without predefined categories or labels.", realLife: "Amazon's recommendation system groups customers with similar browsing and purchase patterns without being told who belongs together, discovering market segments automatically." },
+                { term: "Reinforcement Learning", definition: "A machine learning paradigm where an agent learns to make decisions by performing actions in an environment to maximize cumulative reward.", realLife: "AlphaGo mastered the game of Go by playing millions of games against itself, learning winning strategies through trial and error, eventually beating world champions." },
+                { term: "Training Data", definition: "The dataset used to teach a machine learning model by providing examples from which the model learns patterns and relationships.", realLife: "To build a voice recognition system for medical dictation, developers use thousands of hours of doctors' recorded notes as training data so the AI learns medical terminology and speech patterns." },
+                { term: "Validation Data", definition: "A dataset used to tune model hyperparameters and assess performance during training, helping prevent overfitting without influencing the test results.", realLife: "While developing a fraud detection system, banks use validation data to adjust the model's sensitivity, ensuring it catches fraud without flagging too many legitimate transactions." },
+                { term: "Test Data", definition: "A dataset used to evaluate the final performance of a trained model, kept separate from training to ensure unbiased assessment.", realLife: "Before deploying a new medical diagnosis AI, researchers test it on patient cases it has never seen to verify it performs accurately in real-world scenarios." },
+                { term: "Overfitting", definition: "When a model learns the training data too well, including noise and outliers, resulting in poor generalization to new, unseen data.", realLife: "A student who memorizes specific practice test questions without understanding concepts will struggle on the actual exam - similarly, an overfit model fails when faced with new data." },
+                { term: "Underfitting", definition: "When a model is too simple to capture the underlying patterns in the data, resulting in poor performance on both training and test data.", realLife: "Using a straight line to predict house prices based only on square footage ignores factors like location and condition, resulting in inaccurate predictions for all houses." },
+                { term: "Hyperparameter", definition: "A configuration variable set before training begins that controls the learning process, such as learning rate, batch size, or number of layers.", realLife: "When training an image classifier, you decide beforehand how many layers it should have and how fast it should learn - these settings aren't learned, they're hyperparameters you choose." },
+                { term: "Epoch", definition: "One complete pass through the entire training dataset during the model training process.", realLife: "Training a language model for 10 epochs means it reads through all Wikipedia articles 10 times, refining its understanding with each complete read-through." },
+                { term: "Batch Size", definition: "The number of training examples used in one iteration of model training, affecting memory usage and training speed.", realLife: "Instead of showing a model one image at a time, you show it 32 images simultaneously, allowing it to learn patterns faster while using computer memory efficiently." },
+                { term: "Learning Rate", definition: "A hyperparameter that controls how much the model changes in response to the estimated error each time the model weights are updated.", realLife: "Like adjusting your steering while driving - too aggressive (high learning rate) and you overcorrect, too cautious (low learning rate) and you correct too slowly." },
+                { term: "Gradient Descent", definition: "An optimization algorithm used to minimize the loss function by iteratively moving in the direction of steepest descent of the gradient.", realLife: "Finding the lowest point in a valley while blindfolded by always walking in the steepest downhill direction - that's how AI models find the best solution." },
+                { term: "Backpropagation", definition: "An algorithm for training neural networks that calculates the gradient of the loss function with respect to the network's weights, enabling efficient learning.", realLife: "When your autocorrect makes a mistake and you fix it, the system traces back through its decision layers to adjust what went wrong - that's backpropagation in action." },
+                { term: "Loss Function", definition: "A mathematical function that measures how far a model's predictions are from the actual values, guiding the optimization process during training.", realLife: "Like a coach measuring how far each basketball shot misses the hoop, the loss function tells the AI how wrong its predictions are so it can improve." },
+                { term: "Activation Function", definition: "A mathematical function applied to a neuron's output to introduce non-linearity, enabling neural networks to learn complex patterns.", realLife: "Like a light dimmer switch that doesn't just turn on/off but adjusts intensity, activation functions let neurons express varying degrees of confidence in their outputs." },
+                { term: "Convolutional Neural Network (CNN)", definition: "A deep learning architecture designed for processing grid-like data such as images, using convolutional layers to automatically learn spatial hierarchies.", realLife: "Facebook's photo tagging feature uses CNNs to scan images, detecting edges first, then shapes, then faces, finally recognizing your friends automatically." },
+                { term: "Recurrent Neural Network (RNN)", definition: "A neural network architecture designed for sequential data, with connections that form cycles allowing information to persist across time steps.", realLife: "Your smartphone's predictive text uses RNNs to remember the context of your sentence, suggesting 'morning' after 'good' because it understands word sequences." },
+                { term: "Transformer", definition: "A neural network architecture that uses self-attention mechanisms to process sequential data in parallel, revolutionizing NLP and enabling models like GPT and BERT.", realLife: "When you search Google, transformers help understand your query by analyzing all words simultaneously, recognizing that 'bank' near 'river' means shoreline, not finance." },
+                { term: "Attention Mechanism", definition: "A technique that allows models to focus on specific parts of the input when producing output, weighing the importance of different input elements.", realLife: "When translating 'I gave her a book,' attention mechanisms focus on 'her' to correctly translate the pronoun based on the recipient's gender in languages like Spanish or French." },
+                { term: "Token", definition: "The basic unit of text processing in NLP, which can be a word, subword, or character that the model processes.", realLife: "The word 'unbelievable' might be split into tokens like 'un,' 'believ,' and 'able,' helping the AI understand word parts and handle words it hasn't seen before." },
+                { term: "Tokenization", definition: "The process of breaking down text into smaller units (tokens) that can be processed by machine learning models.", realLife: "Before analyzing a tweet, AI breaks it into tokens: '@username' becomes one token, '#trending' another, and 'amazing!!!' might become ['amazing', '!', '!', '!'] to preserve emphasis." },
+                { term: "Embedding", definition: "A dense vector representation of data (typically words or tokens) that captures semantic meaning in a continuous vector space.", realLife: "The AI learns that 'king' - 'man' + 'woman' = 'queen' by positioning these words in mathematical space where relationships like gender and royalty are preserved as directions." },
+                { term: "Context Window", definition: "The maximum amount of text (measured in tokens) that a language model can consider at once when generating or processing text.", realLife: "Like reading a book with only the last 10 pages visible, Claude with a 200,000 token context window can 'remember' and reference information from roughly 150,000 words back in the conversation." },
+                { term: "Temperature", definition: "A parameter controlling randomness in text generation; lower values make output more deterministic, higher values increase creativity and variability.", realLife: "Temperature 0 makes ChatGPT give the same answer every time ('Paris is the capital of France'), while temperature 1.5 might produce creative variations ('The romantic City of Light, Paris, serves as France's capital')." },
+                { term: "Top-k Sampling", definition: "A text generation strategy that selects the next token from the k most likely options, balancing quality and diversity.", realLife: "Instead of always picking 'the' as the most likely next word, top-k sampling considers the 40 most probable words, allowing for more natural and varied responses." },
+                { term: "Beam Search", definition: "A search algorithm that explores multiple possible sequences simultaneously, keeping the top candidates at each step to find high-quality outputs.", realLife: "When translating a sentence, instead of committing to one translation path, beam search explores the top 5 most promising translations simultaneously, choosing the best complete sentence at the end." },
+                { term: "Perplexity", definition: "A measurement of how well a probability model predicts a sample, commonly used to evaluate language models (lower is better).", realLife: "If an AI trained on medical texts sees 'The patient has a fever,' it should have low perplexity (unsurprised), but high perplexity (very surprised) if it sees 'The patient has a unicorn.'" },
+                { term: "BLEU Score", definition: "An algorithm for evaluating the quality of machine-translated text by comparing it to reference translations, measuring n-gram overlap.", realLife: "When Google Translate converts Spanish to English, BLEU score compares it to human translations, checking if the same phrases and word orders appear - scores above 50 indicate excellent quality." },
+                { term: "F1 Score", definition: "A metric combining precision and recall into a single score, representing the harmonic mean of both measures.", realLife: "A cancer detection AI with 95% F1 score balances finding most cancers (recall) while avoiding false alarms (precision), crucial when both missed diagnoses and unnecessary treatments have serious consequences." },
+                { term: "Precision", definition: "The ratio of correctly predicted positive observations to the total predicted positives, measuring accuracy of positive predictions.", realLife: "If a spam filter marks 100 emails as spam and 90 actually are spam, it has 90% precision - important because you don't want legitimate emails wrongly blocked." },
+                { term: "Recall", definition: "The ratio of correctly predicted positive observations to all actual positives, measuring the model's ability to find all positive cases.", realLife: "A security camera AI with 95% recall catches 95 out of 100 actual intruders - the 5 it misses could be a security risk, so high recall is critical." },
+                { term: "Bias (ML)", definition: "Systematic errors in model predictions that can arise from training data, algorithm design, or incorrect assumptions about the problem.", realLife: "When Amazon's hiring AI favored male candidates because it was trained on 10 years of resumes from a male-dominated tech industry, this showed systematic bias in the training data." },
+                { term: "Variance (ML)", definition: "The model's sensitivity to fluctuations in the training data, where high variance can lead to overfitting.", realLife: "A student who performs perfectly on practice tests but poorly on actual exams shows high variance - they've learned the specific practice questions too well, not the general concepts." },
+                { term: "Regularization", definition: "Techniques used to prevent overfitting by adding constraints or penalties to the model, such as L1 or L2 regularization.", realLife: "Like teaching a child not just specific examples but general principles, regularization forces AI to learn broader patterns rather than memorizing training data, improving performance on new cases." },
+                { term: "Dropout", definition: "A regularization technique where randomly selected neurons are ignored during training, helping prevent overfitting in neural networks.", realLife: "Like studying with random pages covered in your textbook, forcing your brain to understand concepts from different angles rather than memorizing page layouts, dropout makes neural networks more robust." },
+                { term: "Feature Engineering", definition: "The process of selecting, transforming, and creating input variables (features) to improve model performance.", realLife: "Instead of just using 'date' to predict ice cream sales, you create features like 'is_summer,' 'temperature,' and 'is_weekend,' giving the AI more meaningful patterns to learn from." },
+                { term: "Dimensionality Reduction", definition: "Techniques for reducing the number of input variables in a dataset while retaining important information, such as PCA or t-SNE.", realLife: "A customer survey with 100 questions can be reduced to 5 key factors (price sensitivity, quality preference, brand loyalty, convenience, service) without losing important insights." },
+                { term: "Cross-Validation", definition: "A model validation technique that partitions data into subsets, training on some and validating on others to assess generalization performance.", realLife: "Instead of one final exam, imagine 5 mini-exams where you train on 4 and test on 1, rotating through all combinations - this ensures your model performs well on varied data." },
+                { term: "Ensemble Learning", definition: "A technique that combines multiple models to produce better predictions than any individual model, such as random forests or gradient boosting.", realLife: "Netflix doesn't use one algorithm to recommend shows - it combines collaborative filtering, content-based recommendations, and trending analysis, trusting the ensemble more than any single method." },
+                { term: "API (Application Programming Interface)", definition: "A set of protocols and tools for building software applications, defining how software components should interact.", realLife: "When you tap 'Sign in with Google' on a website, you're using Google's API - the website asks Google to verify your identity without needing to know your password or how Google's login system works." },
+                { term: "Model Deployment", definition: "The process of integrating a trained machine learning model into a production environment where it can make predictions on new data.", realLife: "After months of training a fraud detection model, a bank deploys it to their payment system, where it now analyzes millions of transactions in real-time, flagging suspicious activity instantly." },
+                { term: "MLOps", definition: "A set of practices that combines machine learning, DevOps, and data engineering to deploy and maintain ML systems in production reliably and efficiently.", realLife: "Spotify uses MLOps to continuously update their music recommendation models, automatically retraining them as listening habits change while ensuring the service never goes down." },
+                { term: "Data Augmentation", definition: "Techniques for artificially increasing training data size by creating modified versions of existing data, improving model robustness.", realLife: "To train a medical imaging AI with limited X-rays, researchers flip, rotate, and adjust brightness of existing images, creating a dataset 10x larger that makes the model work better on diverse real-world scans." },
+                { term: "Class Imbalance", definition: "A situation where classes in the training data are not represented equally, potentially causing models to be biased toward majority classes.", realLife: "Training fraud detection on credit card data where only 0.1% of transactions are fraudulent means the AI might just label everything as 'legitimate' and still be 99.9% accurate but completely useless." },
+                { term: "Confusion Matrix", definition: "A table showing the performance of a classification model, displaying true positives, true negatives, false positives, and false negatives.", realLife: "A COVID test's confusion matrix shows: true positives (correctly identified sick people), false positives (healthy people wrongly flagged), false negatives (sick people missed), and true negatives (correctly identified healthy people)." },
+                { term: "Zero-Shot Learning", definition: "The ability of a model to correctly handle tasks or recognize classes it has never seen during training, using only descriptions or related knowledge.", realLife: "GPT-4 can generate Python code even if trained primarily on general text, because it understands programming concepts from descriptions and examples in its training data, not explicit code training." },
+                { term: "Few-Shot Learning", definition: "A learning paradigm where models can learn to perform new tasks with only a small number of training examples.", realLife: "After showing GPT just 3 examples of how you want blog titles formatted ('Title: | Category: | Date:'), it can generate hundreds more in the same format without additional training." },
+                { term: "Generative AI", definition: "AI systems capable of creating new content (text, images, audio, code) based on patterns learned from training data.", realLife: "DALL-E creates original images from text prompts, Midjourney generates art, ChatGPT writes essays, and GitHub Copilot writes code - all creating new content never seen before." },
+                { term: "Discriminative Model", definition: "A model that learns the boundary between classes, focusing on distinguishing between different categories of data.", realLife: "An email spam filter is discriminative - it learns what makes spam different from legitimate email and draws a boundary: 'This side is spam, that side is not spam.'" },
+                { term: "Generative Model", definition: "A model that learns the underlying distribution of data and can generate new samples similar to the training data.", realLife: "After learning from millions of faces, a generative model can create photorealistic portraits of people who don't exist, capturing the patterns of what makes a face look human." }
+            ];
+
+            const professionalTerms = [
+                { term: "Articulate", definition: "To express ideas clearly and effectively in words.", example: "She was able to articulate her vision for the project in a way that inspired the entire team.", synonyms: ["Express", "Communicate", "Convey"], realLife: "In job interviews, candidates who articulate their achievements clearly stand out - explaining 'I increased sales by 40%' is more impactful than vaguely saying 'I did well in sales.'" },
+                { term: "Collaborate", definition: "To work jointly with others, especially in an intellectual endeavor.", example: "Our department will collaborate with marketing to develop a comprehensive strategy.", synonyms: ["Cooperate", "Partner", "Team up"], realLife: "Remote teams use Slack and Zoom to collaborate across time zones, sharing documents in real-time so a designer in California and developer in India can build products together seamlessly." },
+                { term: "Facilitate", definition: "To make an action or process easier or smoother.", example: "The new software will facilitate communication between remote team members.", synonyms: ["Enable", "Expedite", "Streamline"], realLife: "Project managers facilitate meetings by setting clear agendas, managing time, and ensuring everyone's voice is heard, turning potentially chaotic discussions into productive decisions." },
+                { term: "Implement", definition: "To put a decision, plan, or system into effect.", example: "We plan to implement the new training program by the end of the quarter.", synonyms: ["Execute", "Apply", "Carry out"], realLife: "After months of planning, a company implements a new CRM system by training staff, migrating data, and going live - moving from theory to actual daily use." },
+                { term: "Leverage", definition: "To use something to maximum advantage.", example: "We can leverage our existing customer base to launch the new product.", synonyms: ["Utilize", "Capitalize on", "Exploit"], realLife: "LinkedIn users leverage their professional networks by asking connections for job referrals, turning relationships into career opportunities without starting from scratch." },
+                { term: "Optimize", definition: "To make the best or most effective use of a situation or resource.", example: "The team worked to optimize the workflow for greater efficiency.", synonyms: ["Enhance", "Improve", "Maximize"], realLife: "Amazon optimizes warehouse layouts so products are positioned by popularity - bestsellers near packing stations reduce walking time, enabling faster delivery and lower costs." },
+                { term: "Mitigate", definition: "To make something less severe, serious, or painful.", example: "The insurance policy helps mitigate financial risks associated with project delays.", synonyms: ["Reduce", "Alleviate", "Minimize"], realLife: "Airlines mitigate flight delay frustration by proactively rebooking passengers and offering meal vouchers, turning a negative experience into a demonstration of customer care." },
+                { term: "Synthesize", definition: "To combine different ideas, influences, or objects into a coherent whole.", example: "The researcher was able to synthesize data from multiple studies to draw meaningful conclusions.", synonyms: ["Integrate", "Combine", "Merge"], realLife: "Business analysts synthesize customer feedback, sales data, and market trends to create a comprehensive quarterly report that tells a complete story rather than presenting disconnected facts." },
+                { term: "Streamline", definition: "To make a process more efficient by simplifying or eliminating unnecessary steps.", example: "The company decided to streamline its approval process to reduce turnaround time.", synonyms: ["Simplify", "Optimize", "Refine"], realLife: "McDonald's streamlined food preparation by creating standardized stations where each worker performs one task repeatedly, reducing order time from 15 minutes to 90 seconds." },
+                { term: "Benchmark", definition: "A standard or point of reference against which things may be compared or assessed.", example: "We use industry benchmarks to evaluate our performance against competitors.", synonyms: ["Standard", "Yardstick", "Reference point"], realLife: "A startup measures its 15% monthly user growth against the industry benchmark of 10%, proving to investors they're outperforming competitors and worth funding." },
+                { term: "Stakeholder", definition: "A person or group with an interest or concern in a business or project.", example: "All stakeholders will be consulted before making the final decision.", synonyms: ["Interested party", "Participant", "Investor"], realLife: "When a hospital plans renovations, stakeholders include patients (comfort), doctors (workflow), administrators (budget), and neighbors (noise) - each group's concerns must be balanced." },
+                { term: "Initiative", definition: "A new plan or process to achieve something or solve a problem.", example: "The company launched a sustainability initiative to reduce its carbon footprint.", synonyms: ["Project", "Program", "Campaign"], realLife: "Patagonia's 'Worn Wear' initiative encourages customers to repair rather than replace gear, reducing waste while building brand loyalty through shared environmental values." },
+                { term: "Paradigm", definition: "A typical example or pattern of something; a model or framework.", example: "The new technology represents a paradigm shift in how we approach education.", synonyms: ["Model", "Pattern", "Framework"], realLife: "The shift from buying software (Microsoft Office CDs) to subscribing (Office 365) represented a paradigm shift in the tech industry, changing how companies generate revenue and deliver updates." },
+                { term: "Comprehensive", definition: "Complete and including all or nearly all elements or aspects.", example: "The report provides a comprehensive analysis of market trends.", synonyms: ["Thorough", "Complete", "Exhaustive"], realLife: "A comprehensive health insurance plan covers not just hospitalizations but also preventive care, mental health, dental, and vision, protecting patients from unexpected medical costs." },
+                { term: "Viable", definition: "Capable of working successfully; feasible.", example: "After careful analysis, the proposal was deemed a viable solution to the problem.", synonyms: ["Feasible", "Workable", "Practicable"], realLife: "Before launching, startups validate if their business model is viable by testing if customers will actually pay enough to cover costs and generate profit, not just if they like the idea." },
+                { term: "Scalable", definition: "Able to be changed in size or scale, especially to grow or expand.", example: "The cloud infrastructure is highly scalable to meet increasing demand.", synonyms: ["Expandable", "Adaptable", "Flexible"], realLife: "Instagram's architecture is scalable - it handled 1 million users in 2010 and over 2 billion by 2023 without completely rebuilding their system, adjusting server capacity as needed." },
+                { term: "Robust", definition: "Strong, healthy, and unlikely to fail or break.", example: "The company has a robust cybersecurity framework to protect sensitive data.", synonyms: ["Strong", "Sturdy", "Resilient"], realLife: "Amazon's robust delivery network includes backup warehouses, multiple carriers, and contingency plans ensuring packages arrive even during storms, strikes, or system failures." },
+                { term: "Prudent", definition: "Acting with or showing care and thought for the future.", example: "It would be prudent to review all contracts before signing them.", synonyms: ["Wise", "Sensible", "Judicious"], realLife: "Prudent financial planning means building an emergency fund before investing in stocks - prioritizing stability over potential gains protects you during unexpected job loss or medical emergencies." },
+                { term: "Conducive", definition: "Making a certain situation or outcome likely or possible.", example: "A quiet environment is conducive to focused study and concentration.", synonyms: ["Favorable", "Beneficial", "Helpful"], realLife: "Google creates workspaces conducive to creativity with colorful furniture, game rooms, and collaborative areas - this environment encourages the innovation needed for breakthrough products." },
+                { term: "Pivotal", definition: "Of crucial importance in relation to the development or success of something.", example: "The CEO's decision was pivotal in turning the company around.", synonyms: ["Critical", "Crucial", "Key"], realLife: "Apple's pivotal decision to create an App Store in 2008 transformed smartphones from communication devices into platforms for countless services, fundamentally changing technology." },
+                { term: "Meticulous", definition: "Showing great attention to detail; very careful and precise.", example: "Her meticulous approach to project management ensured nothing was overlooked.", synonyms: ["Thorough", "Careful", "Precise"], realLife: "NASA's meticulous pre-launch checklists involving thousands of verification steps prevent disasters - missing even one detail could endanger astronaut lives or waste billions." },
+                { term: "Proactive", definition: "Creating or controlling a situation rather than just responding to it after it happens.", example: "Taking a proactive approach to maintenance can prevent costly equipment failures.", synonyms: ["Anticipatory", "Forward-thinking", "Preventive"], realLife: "Proactive IT teams update security patches before hackers exploit vulnerabilities, preventing data breaches rather than responding to attacks after customer information is stolen." },
+                { term: "Cohesive", definition: "Characterized by or causing cohesion; united and working together effectively.", example: "Building a cohesive team requires trust and clear communication.", synonyms: ["Unified", "Integrated", "Connected"], realLife: "Pixar builds cohesive creative teams by requiring directors, writers, and animators to work together from day one, ensuring the story, visuals, and emotions align perfectly." },
+                { term: "Autonomous", definition: "Having the freedom to act independently; self-governing.", example: "The autonomous team was able to make decisions without seeking approval from management.", synonyms: ["Independent", "Self-sufficient", "Self-directed"], realLife: "Tesla's autonomous vehicles use sensors and AI to navigate without human input, making real-time decisions about steering, speed, and obstacles during highway driving." },
+                { term: "Reciprocal", definition: "Given, felt, or done in return; mutual.", example: "The partnership is built on reciprocal trust and mutual benefit.", synonyms: ["Mutual", "Two-way", "Shared"], realLife: "Professional networking operates on reciprocal principles - when you help a colleague get a job interview, they're more likely to recommend you later, creating mutually beneficial relationships." },
+                { term: "Pragmatic", definition: "Dealing with things sensibly and realistically based on practical considerations.", example: "We need to take a pragmatic approach to solving this budget constraint.", synonyms: ["Practical", "Realistic", "Sensible"], realLife: "A pragmatic manager facing budget cuts focuses on core functions over nice-to-haves, choosing to maintain customer service staff while postponing office renovations." },
+                { term: "Tangible", definition: "Perceptible by touch; clear and definite; real.", example: "The new policy has led to tangible improvements in employee satisfaction.", synonyms: ["Concrete", "Real", "Measurable"], realLife: "Saying 'we improved customer service' is vague, but showing tangible results like '25% faster response times and 40% fewer complaints' provides concrete evidence of success." },
+                { term: "Allocate", definition: "To distribute resources or duties for a particular purpose.", example: "The committee will allocate funds to departments based on their proposals.", synonyms: ["Assign", "Distribute", "Apportion"], realLife: "A project manager allocates team members' time: 60% to urgent client work, 30% to development projects, and 10% to training, ensuring all priorities receive appropriate attention." },
+                { term: "Substantiate", definition: "To provide evidence to support or prove the truth of something.", example: "You'll need to substantiate your claims with data and documentation.", synonyms: ["Verify", "Validate", "Confirm"], realLife: "During a salary negotiation, substantiating your request with market research showing similar roles pay 15% more strengthens your case far more than just asking for a raise." },
+                { term: "Delegate", definition: "To entrust a task or responsibility to another person.", example: "Effective leaders know when to delegate tasks to their team members.", synonyms: ["Assign", "Entrust", "Transfer"], realLife: "A CEO delegates daily operations to department heads, freeing time for strategic planning - trying to personally approve every decision would create bottlenecks and slow company growth." },
+                { term: "Expedite", definition: "To make an action or process happen sooner or be accomplished more quickly.", example: "We'll expedite the shipping to ensure delivery before the deadline.", synonyms: ["Accelerate", "Hasten", "Speed up"], realLife: "Hospitals expedite organ transplants by using helicopters and dedicated lanes, reducing transport time from hours to minutes when every second affects patient survival." },
+                { term: "Enhance", definition: "To improve the quality, value, or extent of something.", example: "The training program is designed to enhance employees' technical skills.", synonyms: ["Improve", "Augment", "Boost"], realLife: "Starbucks enhances customer experience by remembering regular orders, offering mobile ordering, and creating comfortable seating - small improvements that build loyalty and justify premium prices." },
+                { term: "Discrepancy", definition: "A lack of compatibility or similarity between two or more facts or claims.", example: "We noticed a discrepancy between the budget forecast and actual expenditures.", synonyms: ["Inconsistency", "Difference", "Variation"], realLife: "Auditors discovering a discrepancy between reported inventory and physical counts might uncover theft, accounting errors, or system problems requiring immediate investigation." },
+                { term: "Consolidate", definition: "To combine things into a single more effective or coherent whole.", example: "The company plans to consolidate its offices to reduce operating costs.", synonyms: ["Merge", "Combine", "Unify"], realLife: "Many people consolidate credit card debt into a single loan with lower interest, simplifying payments from five bills to one while reducing monthly costs." },
+                { term: "Advocate", definition: "To publicly recommend or support a particular cause or policy.", example: "She has been a strong advocate for workplace diversity and inclusion.", synonyms: ["Support", "Champion", "Promote"], realLife: "Consumer advocates like Ralph Nader pushed for seatbelt laws and air bags, using research and public campaigns to make car safety standard rather than optional." },
+                { term: "Juxtapose", definition: "To place or deal with close together for contrasting effect.", example: "The presentation juxtaposes traditional methods with innovative approaches.", synonyms: ["Contrast", "Compare", "Set side by side"], realLife: "Apple's marketing juxtaposes their sleek, simple products against competitors' complicated designs, making the contrast immediately visible and reinforcing their brand identity." },
+                { term: "Extrapolate", definition: "To extend known information to infer unknown information or future trends.", example: "We can extrapolate from current sales data to predict next quarter's revenue.", synonyms: ["Infer", "Deduce", "Project"], realLife: "Climate scientists extrapolate from current temperature trends to predict future warming, using historical patterns to forecast conditions decades ahead." },
+                { term: "Delineate", definition: "To describe or portray something precisely.", example: "The contract clearly delineates the responsibilities of each party.", synonyms: ["Define", "Outline", "Specify"], realLife: "Employee handbooks delineate vacation policies in detail - specifying accrual rates, blackout dates, and approval processes prevents confusion and ensures fair treatment." },
+                { term: "Circumvent", definition: "To find a way around an obstacle or difficulty.", example: "The team found a creative solution to circumvent the technical limitations.", synonyms: ["Bypass", "Avoid", "Navigate around"], realLife: "When shipping routes were blocked during the Suez Canal crisis, companies circumvented delays by rerouting around Africa, adding weeks but ensuring delivery." },
+                { term: "Substantive", definition: "Having a firm basis in reality and therefore important or meaningful.", example: "The committee made substantive changes to the policy based on feedback.", synonyms: ["Significant", "Meaningful", "Considerable"], realLife: "Offering a 2% raise is minimal, but a substantive compensation package including 15% raise, stock options, and flexible hours demonstrates genuine commitment to employee retention." },
+                { term: "Exacerbate", definition: "To make a problem, bad situation, or negative feeling worse.", example: "Poor communication can exacerbate conflicts within the team.", synonyms: ["Worsen", "Aggravate", "Intensify"], realLife: "Posting angry responses on social media during a PR crisis exacerbates the problem by adding fuel to the fire - silence or measured responses prevent escalation." },
+                { term: "Proliferate", definition: "To increase rapidly in numbers; multiply.", example: "Social media platforms have proliferated over the past decade.", synonyms: ["Multiply", "Increase", "Expand"], realLife: "Once one company offers remote work, others follow suit - flexible work policies proliferated during COVID-19 as companies competed for talent with similar benefits." },
+                { term: "Nuance", definition: "A subtle difference in or shade of meaning, expression, or sound.", example: "Understanding the nuances of cultural communication is essential for global business.", synonyms: ["Subtlety", "Distinction", "Refinement"], realLife: "In Japan, saying 'that might be difficult' is a nuanced way of saying 'no' - missing this cultural nuance can lead foreigners to misinterpret business negotiations." },
+                { term: "Ambiguous", definition: "Open to more than one interpretation; not having one obvious meaning.", example: "The ambiguous wording in the contract led to different interpretations by each party.", synonyms: ["Unclear", "Vague", "Equivocal"], realLife: "An ambiguous deadline like 'soon' causes problems - one person thinks it means today, another next week, leading to missed expectations and conflicts." },
+                { term: "Expedient", definition: "Convenient and practical although possibly improper or immoral.", example: "While it may seem expedient to cut corners, it could damage our reputation long-term.", synonyms: ["Convenient", "Advantageous", "Practical"], realLife: "Using cheaper materials might be expedient for quarterly profits, but when products fail early, the long-term cost in warranties and brand damage outweighs short-term savings." },
+                { term: "Diligent", definition: "Having or showing care and conscientiousness in one's work or duties.", example: "His diligent research uncovered critical information that others had missed.", synonyms: ["Conscientious", "Thorough", "Attentive"], realLife: "Diligent lawyers review every clause in contracts, catching the fine print where unfavorable terms hide - this thoroughness prevents expensive lawsuits later." },
+                { term: "Fundamental", definition: "Forming a necessary base or core; of central importance.", example: "Trust is fundamental to building strong client relationships.", synonyms: ["Basic", "Essential", "Core"], realLife: "Strong encryption is fundamental to banking apps - without this core security feature, customers wouldn't trust the platform with financial information regardless of other features." },
+                { term: "Inherent", definition: "Existing in something as a permanent, essential, or characteristic attribute.", example: "There are inherent risks in any investment strategy.", synonyms: ["Intrinsic", "Built-in", "Natural"], realLife: "Launching a startup has inherent risks like market uncertainty and funding challenges - these aren't avoidable but must be managed through planning and adaptability." },
+                { term: "Paramount", definition: "More important than anything else; supreme.", example: "Customer satisfaction is paramount to our business strategy.", synonyms: ["Supreme", "Primary", "Foremost"], realLife: "For airlines, safety is paramount - they delay flights, ground planes for minor issues, and invest billions in training because no profit justifies risking passenger lives." },
+                { term: "Contingent", definition: "Subject to chance; dependent on certain conditions being met.", example: "The contract offer is contingent upon successfully passing the background check.", synonyms: ["Conditional", "Dependent", "Subject to"], realLife: "Real estate offers are often contingent on home inspections - if inspectors find major problems, buyers can withdraw without penalty, protecting them from costly surprises." },
+                { term: "Explicit", definition: "Stated clearly and in detail, leaving no room for confusion or doubt.", example: "The manager gave explicit instructions on how to handle customer complaints.", synonyms: ["Clear", "Direct", "Unambiguous"], realLife: "Good managers give explicit feedback like 'The report needs three specific changes: add cost analysis, cite sources, and shorten to 5 pages' rather than vague 'improve the report.'" },
+                { term: "Implicit", definition: "Suggested though not directly expressed; understood without being stated.", example: "There was an implicit understanding that everyone would contribute equally to the project.", synonyms: ["Implied", "Tacit", "Unspoken"], realLife: "When a boss emails at midnight, there's an implicit expectation you're available 24/7 even if never stated - this unspoken pressure affects work-life balance." },
+                { term: "Holistic", definition: "Characterized by the belief that the parts of something are interconnected.", example: "We take a holistic approach to employee wellness, addressing physical and mental health.", synonyms: ["Comprehensive", "Integrated", "Complete"], realLife: "Holistic doctors treat patients by examining diet, stress, sleep, and exercise together rather than just prescribing medication - addressing root causes, not just symptoms." },
+                { term: "Qualitative", definition: "Relating to the quality or character of something rather than its quantity.", example: "The survey includes qualitative questions to gather detailed feedback from customers.", synonyms: ["Descriptive", "Subjective", "Non-numerical"], realLife: "While surveys show 85% customer satisfaction (quantitative), qualitative interviews reveal why - customers value friendly staff and quick service more than low prices." },
+                { term: "Quantitative", definition: "Relating to or measured by the quantity of something rather than its quality.", example: "We need quantitative data to support our hypothesis about market trends.", synonyms: ["Numerical", "Measurable", "Statistical"], realLife: "Saying 'sales improved' is vague, but quantitative data showing '23% revenue increase and 15,000 new customers' provides concrete evidence for investor presentations." },
+                { term: "Strategic", definition: "Relating to the identification of long-term aims and the means of achieving them.", example: "The board discussed strategic planning for the company's five-year growth objectives.", synonyms: ["Planned", "Calculated", "Deliberate"], realLife: "Amazon's strategic decision to lose money on Prime for years built customer loyalty - this long-term thinking created a subscription base worth billions today." },
+                { term: "Tactical", definition: "Relating to actions carefully planned to achieve a specific end.", example: "The marketing team developed tactical campaigns to boost short-term sales.", synonyms: ["Strategic", "Planned", "Calculated"], realLife: "A tactical sales promotion like 'Buy One Get One' this weekend drives immediate revenue spikes, while strategic brand building through sponsorships creates long-term value." },
+                { term: "Exemplary", definition: "Serving as a desirable model; representing the best of its kind.", example: "Her exemplary performance earned her the employee of the year award.", synonyms: ["Outstanding", "Excellent", "Model"], realLife: "Zappos' exemplary customer service, like surprising customers with overnight shipping or accepting returns after years, sets the standard other retailers strive to match." },
+                { term: "Preliminary", definition: "Denoting an action or event preceding or done in preparation for something fuller or more important.", example: "These are just preliminary results; we'll have the final analysis next week.", synonyms: ["Initial", "Preparatory", "Introductory"], realLife: "Clinical trials begin with preliminary studies on 20 patients to check safety before expanding to thousands - rushing past this phase could endanger lives." },
+                { term: "Concurrent", definition: "Existing, happening, or done at the same time.", example: "He managed multiple concurrent projects while maintaining high quality standards.", synonyms: ["Simultaneous", "Parallel", "Coinciding"], realLife: "Software developers handle concurrent tasks by working on bug fixes while code reviews happen and new features are planned - juggling multiple projects requires careful time management." }
+            ];
+
+            const aiTotalCards = aiTerms.length;
+            const profTotalCards = professionalTerms.length;
+            const aiStudiedCount = studiedCards.ai.size;
+            const profStudiedCount = studiedCards.professional.size;
+            const aiProgressPercentage = (aiStudiedCount / aiTotalCards) * 100;
+            const profProgressPercentage = (profStudiedCount / profTotalCards) * 100;
+
+            const handleAICardClick = () => {
+                setIsAIFlipped(!isAIFlipped);
+                if (!isAIFlipped && !studiedCards.ai.has(currentAIIndex)) {
+                    setStudiedCards(prev => ({
+                        ...prev,
+                        ai: new Set([...prev.ai, currentAIIndex])
+                    }));
+                }
+            };
+
+            const handleProfCardClick = () => {
+                setIsProfFlipped(!isProfFlipped);
+                if (!isProfFlipped && !studiedCards.professional.has(currentProfIndex)) {
+                    setStudiedCards(prev => ({
+                        ...prev,
+                        professional: new Set([...prev.professional, currentProfIndex])
+                    }));
+                }
+            };
+
+            const handleAINext = () => {
+                setIsAIFlipped(false);
+                setCurrentAIIndex((prev) => (prev + 1) % aiTotalCards);
+            };
+
+            const handleAIPrevious = () => {
+                setIsAIFlipped(false);
+                setCurrentAIIndex((prev) => (prev - 1 + aiTotalCards) % aiTotalCards);
+            };
+
+            const handleProfNext = () => {
+                setIsProfFlipped(false);
+                setCurrentProfIndex((prev) => (prev + 1) % profTotalCards);
+            };
+
+            const handleProfPrevious = () => {
+                setIsProfFlipped(false);
+                setCurrentProfIndex((prev) => (prev - 1 + profTotalCards) % profTotalCards);
+            };
+
+            const handleAIReset = () => {
+                setStudiedCards(prev => ({ ...prev, ai: new Set() }));
+                setCurrentAIIndex(0);
+                setIsAIFlipped(false);
+            };
+
+            const handleProfReset = () => {
+                setStudiedCards(prev => ({ ...prev, professional: new Set() }));
+                setCurrentProfIndex(0);
+                setIsProfFlipped(false);
+            };
+
+            const currentAICard = aiTerms[currentAIIndex];
+            const currentProfCard = professionalTerms[currentProfIndex];
+
+            return (
+                <div style={{ minHeight: '100vh', background: 'linear-gradient(to bottom right, #f8fafc, #eff6ff, #faf5ff)', padding: '1.5rem', overflowX: 'hidden' }}>
+                    <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
+                        {/* Header */}
+                        <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
+                            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+                                <span style={{ fontSize: '3rem' }} className="bounce-emoji">🎯</span>
+                                <h1 className="gradient-text" style={{ fontSize: 'clamp(2rem, 5vw, 4rem)', fontWeight: '800', letterSpacing: '-0.02em' }}>
+                                    AI & Quick Professional Terms
+                                </h1>
+                                <span style={{ fontSize: '3rem' }} className="pulse-emoji">⚡</span>
+                            </div>
+                            <p style={{ color: '#64748b', fontSize: '1.125rem', fontWeight: '300', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                <span>✨</span>
+                                Master Your Professional Journey in 8 Months
+                                <span>✨</span>
+                            </p>
+                        </div>
+
+                        {/* Main Layout - Two Columns */}
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
+                            {/* LEFT COLUMN - AI Terms */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                                <div className="diagonal-container">
+                                    <div className="diagonal-card">
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+                                            <span>🧠</span>
+                                            <h2 style={{ fontSize: '1.875rem', fontWeight: '700', color: '#1e293b' }}>AI & ML Terms</h2>
+                                            <span className="spin-emoji">🤖</span>
+                                        </div>
+
+                                        {/* AI Card */}
+                                        <div className={`flashcard card-enter ${isAIFlipped ? 'flashcard-flipped' : ''}`}>
+                                            <div className="flashcard-inner" style={{ aspectRatio: '1', width: '100%', maxWidth: '500px', margin: '0 auto' }}>
+                                                {/* Front */}
+                                                <div
+                                                    className="flashcard-front"
+                                                    onClick={handleAICardClick}
+                                                    style={{
+                                                        cursor: 'pointer',
+                                                        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+                                                        background: 'linear-gradient(to bottom right, #3b82f6, #4f46e5, #6366f1)'
+                                                    }}
+                                                >
+                                                    <div style={{ textAlign: 'center' }}>
+                                                        <div style={{ marginBottom: '1.5rem' }}>
+                                                            <span style={{ fontSize: '4rem' }} className="bounce-emoji">🧠</span>
+                                                        </div>
+                                                        <h2 className="term-font" style={{ fontSize: 'clamp(2rem, 4vw, 3.5rem)', fontWeight: '700', color: 'white', marginBottom: '1.5rem', padding: '0 1rem' }}>
+                                                            {currentAICard.term}
+                                                        </h2>
+                                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', color: 'white', fontSize: '1.125rem', opacity: 0.9, fontWeight: '300' }}>
+                                                            <span>⚡</span>
+                                                            <p>Click to reveal definition</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Back */}
+                                                <div
+                                                    className="flashcard-back"
+                                                    onClick={handleAICardClick}
+                                                    style={{
+                                                        cursor: 'pointer',
+                                                        background: 'white',
+                                                        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+                                                        overflowY: 'auto'
+                                                    }}
+                                                >
+                                                    <div style={{ width: '100%', textAlign: 'left' }}>
+                                                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', marginBottom: '1.5rem' }}>
+                                                            <span style={{ fontSize: '1.75rem' }}>📖</span>
+                                                            <h3 className="term-font" style={{ fontSize: 'clamp(1.5rem, 3vw, 2rem)', fontWeight: '700', color: '#1e293b' }}>
+                                                                {currentAICard.term}
+                                                            </h3>
+                                                        </div>
+
+                                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', color: '#334155' }}>
+                                                            <div>
+                                                                <p style={{ fontWeight: '600', color: '#0f172a', marginBottom: '0.75rem', fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                                    <span>🎯</span>
+                                                                    Definition
+                                                                </p>
+                                                                <p style={{ fontSize: 'clamp(1rem, 2vw, 1.25rem)', lineHeight: '1.6' }}>
+                                                                    {currentAICard.definition}
+                                                                </p>
+                                                            </div>
+
+                                                            <div style={{ paddingTop: '1rem', borderTop: '1px solid #e2e8f0' }}>
+                                                                <p style={{ fontWeight: '600', color: '#0f172a', marginBottom: '0.75rem', fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                                    <span>✨</span>
+                                                                    Real-Life Example
+                                                                </p>
+                                                                <p style={{ fontSize: 'clamp(0.9rem, 2vw, 1.125rem)', fontStyle: 'italic', color: '#64748b', lineHeight: '1.6' }}>
+                                                                    {currentAICard.realLife}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* AI Navigation */}
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem', gap: '1rem' }}>
+                                            <button
+                                                onClick={handleAIPrevious}
+                                                className="btn-hover"
+                                                style={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '0.5rem',
+                                                    padding: '0.75rem 1.5rem',
+                                                    background: 'white',
+                                                    borderRadius: '0.75rem',
+                                                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                                                    color: '#334155',
+                                                    fontWeight: '600',
+                                                    border: 'none',
+                                                    cursor: 'pointer'
+                                                }}
+                                            >
+                                                <span>←</span>
+                                                <span style={{ display: window.innerWidth > 640 ? 'inline' : 'none' }}>Previous</span>
+                                            </button>
+
+                                            <div style={{ textAlign: 'center' }}>
+                                                <p style={{ color: '#64748b', fontWeight: '600', fontSize: '1.125rem' }}>
+                                                    {currentAIIndex + 1} / {aiTotalCards}
+                                                </p>
+                                                <button
+                                                    onClick={handleAIReset}
+                                                    style={{
+                                                        color: '#94a3b8',
+                                                        fontSize: '0.875rem',
+                                                        border: 'none',
+                                                        background: 'none',
+                                                        cursor: 'pointer',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: '0.25rem',
+                                                        margin: '0.25rem auto 0'
+                                                    }}
+                                                >
+                                                    <span>↻</span>
+                                                    Reset
+                                                </button>
+                                            </div>
+
+                                            <button
+                                                onClick={handleAINext}
+                                                className="btn-hover"
+                                                style={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '0.5rem',
+                                                    padding: '0.75rem 1.5rem',
+                                                    background: 'white',
+                                                    borderRadius: '0.75rem',
+                                                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                                                    color: '#334155',
+                                                    fontWeight: '600',
+                                                    border: 'none',
+                                                    cursor: 'pointer'
+                                                }}
+                                            >
+                                                <span style={{ display: window.innerWidth > 640 ? 'inline' : 'none' }}>Next</span>
+                                                <span>→</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* AI Progress Tracker */}
+                                <div style={{ background: 'white', borderRadius: '1.5rem', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)', padding: '2rem' }}>
+                                    <h3 style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1e293b', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <span>🏆</span>
+                                        AI Progress
+                                        <span className="float-emoji">📊</span>
+                                    </h3>
+
+                                    <div style={{ marginBottom: '2rem' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                                            <span style={{ color: '#64748b', fontWeight: '500' }}>Cards Studied</span>
+                                            <span style={{ color: '#1e293b', fontWeight: '700' }}>
+                                                {aiStudiedCount} / {aiTotalCards}
+                                            </span>
+                                        </div>
+                                        <div style={{ fontSize: '2.25rem', fontWeight: '700', color: '#3b82f6', marginBottom: '0.5rem' }}>
+                                            {Math.round(aiProgressPercentage)}%
+                                        </div>
+                                    </div>
+
+                                    {/* Flagpole */}
+                                    <div style={{ position: 'relative', height: '16rem', display: 'flex', justifyContent: 'center', alignItems: 'flex-end', marginBottom: '1.5rem' }}>
+                                        <div style={{ width: '0.5rem', height: '100%', background: '#cbd5e1', borderRadius: '9999px', position: 'relative' }}>
+                                            <div
+                                                className={aiProgressPercentage === 100 ? 'completed-flag flag-animation' : ''}
+                                                style={{
+                                                    position: 'absolute',
+                                                    left: '0.5rem',
+                                                    width: '4rem',
+                                                    bottom: `${aiProgressPercentage}%`,
+                                                    transition: 'bottom 1s ease',
+                                                    color: '#3b82f6',
+                                                    filter: 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))'
+                                                }}
+                                            >
+                                                <span style={{ fontSize: '3.5rem' }}>🚩</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {aiProgressPercentage === 100 && (
+                                        <div style={{
+                                            background: 'linear-gradient(to right, #dbeafe, #e0e7ff)',
+                                            border: '2px solid #3b82f6',
+                                            borderRadius: '1rem',
+                                            padding: '1rem',
+                                            textAlign: 'center'
+                                        }}>
+                                            <p style={{ fontSize: '1.875rem', marginBottom: '0.5rem' }} className="bounce-emoji">🎉</p>
+                                            <p style={{ fontWeight: '700', color: '#1e40af', fontSize: '1.125rem' }}>
+                                                AI Set Complete!
+                                            </p>
+                                            <p style={{ fontSize: '0.875rem', color: '#1e3a8a' }}>
+                                                You're an AI expert now!
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* RIGHT COLUMN - Professional Terms */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                                <div className="diagonal-container">
+                                    <div className="diagonal-card">
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+                                            <span>💼</span>
+                                            <h2 style={{ fontSize: '1.875rem', fontWeight: '700', color: '#1e293b' }}>Professional Vocabulary</h2>
+                                            <span className="pulse-emoji">💼</span>
+                                        </div>
+
+                                        {/* Professional Card */}
+                                        <div className={`flashcard card-enter ${isProfFlipped ? 'flashcard-flipped' : ''}`}>
+                                            <div className="flashcard-inner" style={{ aspectRatio: '1', width: '100%', maxWidth: '500px', margin: '0 auto' }}>
+                                                {/* Front */}
+                                                <div
+                                                    className="flashcard-front"
+                                                    onClick={handleProfCardClick}
+                                                    style={{
+                                                        cursor: 'pointer',
+                                                        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+                                                        background: 'linear-gradient(to bottom right, #a855f7, #9333ea, #ec4899)'
+                                                    }}
+                                                >
+                                                    <div style={{ textAlign: 'center' }}>
+                                                        <div style={{ marginBottom: '1.5rem' }}>
+                                                            <span style={{ fontSize: '4rem' }} className="float-emoji">📚</span>
+                                                        </div>
+                                                        <h2 className="term-font" style={{ fontSize: 'clamp(2rem, 4vw, 3.5rem)', fontWeight: '700', color: 'white', marginBottom: '1.5rem', padding: '0 1rem' }}>
+                                                            {currentProfCard.term}
+                                                        </h2>
+                                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', color: 'white', fontSize: '1.125rem', opacity: 0.9, fontWeight: '300' }}>
+                                                            <span>✨</span>
+                                                            <p>Click to reveal definition</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Back */}
+                                                <div
+                                                    className="flashcard-back"
+                                                    onClick={handleProfCardClick}
+                                                    style={{
+                                                        cursor: 'pointer',
+                                                        background: 'white',
+                                                        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+                                                        overflowY: 'auto'
+                                                    }}
+                                                >
+                                                    <div style={{ width: '100%', textAlign: 'left' }}>
+                                                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', marginBottom: '1.5rem' }}>
+                                                            <span style={{ fontSize: '1.75rem' }}>📖</span>
+                                                            <h3 className="term-font" style={{ fontSize: 'clamp(1.5rem, 3vw, 2rem)', fontWeight: '700', color: '#1e293b' }}>
+                                                                {currentProfCard.term}
+                                                            </h3>
+                                                        </div>
+
+                                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', color: '#334155' }}>
+                                                            <div>
+                                                                <p style={{ fontWeight: '600', color: '#0f172a', marginBottom: '0.75rem', fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                                    <span>🎯</span>
+                                                                    Definition
+                                                                </p>
+                                                                <p style={{ fontSize: 'clamp(1rem, 2vw, 1.25rem)', lineHeight: '1.6' }}>
+                                                                    {currentProfCard.definition}
+                                                                </p>
+                                                            </div>
+
+                                                            <div style={{ paddingTop: '1rem', borderTop: '1px solid #e2e8f0' }}>
+                                                                <p style={{ fontWeight: '600', color: '#0f172a', marginBottom: '0.75rem', fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                                    <span>✨</span>
+                                                                    Example
+                                                                </p>
+                                                                <p style={{ fontSize: 'clamp(0.9rem, 2vw, 1.125rem)', fontStyle: 'italic', color: '#64748b', lineHeight: '1.6' }}>
+                                                                    "{currentProfCard.example}"
+                                                                </p>
+                                                            </div>
+
+                                                            <div style={{ paddingTop: '1rem', borderTop: '1px solid #e2e8f0' }}>
+                                                                <p style={{ fontWeight: '600', color: '#0f172a', marginBottom: '0.75rem', fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                                    <span>⚡</span>
+                                                                    Synonyms
+                                                                </p>
+                                                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                                                                    {currentProfCard.synonyms.map((synonym, idx) => (
+                                                                        <span
+                                                                            key={idx}
+                                                                            style={{
+                                                                                padding: '0.5rem 1rem',
+                                                                                background: '#f3e8ff',
+                                                                                color: '#7e22ce',
+                                                                                borderRadius: '9999px',
+                                                                                fontSize: '0.875rem',
+                                                                                fontWeight: '500'
+                                                                            }}
+                                                                        >
+                                                                            {synonym}
+                                                                        </span>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+
+                                                            <div style={{ paddingTop: '1rem', borderTop: '1px solid #e2e8f0' }}>
+                                                                <p style={{ fontWeight: '600', color: '#0f172a', marginBottom: '0.75rem', fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                                    <span>🎯</span>
+                                                                    Practical Application
+                                                                </p>
+                                                                <p style={{ fontSize: 'clamp(0.9rem, 2vw, 1.125rem)', fontStyle: 'italic', color: '#64748b', lineHeight: '1.6' }}>
+                                                                    {currentProfCard.realLife}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Professional Navigation */}
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem', gap: '1rem' }}>
+                                            <button
+                                                onClick={handleProfPrevious}
+                                                className="btn-hover"
+                                                style={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '0.5rem',
+                                                    padding: '0.75rem 1.5rem',
+                                                    background: 'white',
+                                                    borderRadius: '0.75rem',
+                                                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                                                    color: '#334155',
+                                                    fontWeight: '600',
+                                                    border: 'none',
+                                                    cursor: 'pointer'
+                                                }}
+                                            >
+                                                <span>←</span>
+                                                <span style={{ display: window.innerWidth > 640 ? 'inline' : 'none' }}>Previous</span>
+                                            </button>
+
+                                            <div style={{ textAlign: 'center' }}>
+                                                <p style={{ color: '#64748b', fontWeight: '600', fontSize: '1.125rem' }}>
+                                                    {currentProfIndex + 1} / {profTotalCards}
+                                                </p>
+                                                <button
+                                                    onClick={handleProfReset}
+                                                    style={{
+                                                        color: '#94a3b8',
+                                                        fontSize: '0.875rem',
+                                                        border: 'none',
+                                                        background: 'none',
+                                                        cursor: 'pointer',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: '0.25rem',
+                                                        margin: '0.25rem auto 0'
+                                                    }}
+                                                >
+                                                    <span>↻</span>
+                                                    Reset
+                                                </button>
+                                            </div>
+
+                                            <button
+                                                onClick={handleProfNext}
+                                                className="btn-hover"
+                                                style={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '0.5rem',
+                                                    padding: '0.75rem 1.5rem',
+                                                    background: 'white',
+                                                    borderRadius: '0.75rem',
+                                                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                                                    color: '#334155',
+                                                    fontWeight: '600',
+                                                    border: 'none',
+                                                    cursor: 'pointer'
+                                                }}
+                                            >
+                                                <span style={{ display: window.innerWidth > 640 ? 'inline' : 'none' }}>Next</span>
+                                                <span>→</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Professional Progress Tracker */}
+                                <div style={{ background: 'white', borderRadius: '1.5rem', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)', padding: '2rem' }}>
+                                    <h3 style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1e293b', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <span>🏆</span>
+                                        Professional Progress
+                                        <span className="spin-emoji">🎯</span>
+                                    </h3>
+
+                                    <div style={{ marginBottom: '2rem' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                                            <span style={{ color: '#64748b', fontWeight: '500' }}>Cards Studied</span>
+                                            <span style={{ color: '#1e293b', fontWeight: '700' }}>
+                                                {profStudiedCount} / {profTotalCards}
+                                            </span>
+                                        </div>
+                                        <div style={{ fontSize: '2.25rem', fontWeight: '700', color: '#a855f7', marginBottom: '0.5rem' }}>
+                                            {Math.round(profProgressPercentage)}%
+                                        </div>
+                                    </div>
+
+                                    {/* Flagpole */}
+                                    <div style={{ position: 'relative', height: '16rem', display: 'flex', justifyContent: 'center', alignItems: 'flex-end', marginBottom: '1.5rem' }}>
+                                        <div style={{ width: '0.5rem', height: '100%', background: '#cbd5e1', borderRadius: '9999px', position: 'relative' }}>
+                                            <div
+                                                className={profProgressPercentage === 100 ? 'completed-flag flag-animation' : ''}
+                                                style={{
+                                                    position: 'absolute',
+                                                    left: '0.5rem',
+                                                    width: '4rem',
+                                                    bottom: `${profProgressPercentage}%`,
+                                                    transition: 'bottom 1s ease',
+                                                    color: '#a855f7',
+                                                    filter: 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))'
+                                                }}
+                                            >
+                                                <span style={{ fontSize: '3.5rem' }}>🚩</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {profProgressPercentage === 100 && (
+                                        <div style={{
+                                            background: 'linear-gradient(to right, #fae8ff, #fce7f3)',
+                                            border: '2px solid #a855f7',
+                                            borderRadius: '1rem',
+                                            padding: '1rem',
+                                            textAlign: 'center'
+                                        }}>
+                                            <p style={{ fontSize: '1.875rem', marginBottom: '0.5rem' }} className="pulse-emoji">🏆</p>
+                                            <p style={{ fontWeight: '700', color: '#701a75', fontSize: '1.125rem' }}>
+                                                Professional Set Complete!
+                                            </p>
+                                            <p style={{ fontSize: '0.875rem', color: '#86198f' }}>
+                                                Communication master!
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Footer */}
+                        <div style={{
+                            textAlign: 'center',
+                            marginTop: '3rem',
+                            padding: '1.5rem',
+                            background: 'rgba(255, 255, 255, 0.5)',
+                            backdropFilter: 'blur(10px)',
+                            borderRadius: '1.5rem'
+                        }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', color: '#64748b', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
+                                <span className="bounce-emoji">🚀</span>
+                                <p style={{ fontWeight: '600' }}>Your 8-Month Learning Journey</p>
+                                <span className="bounce-emoji">✨</span>
+                            </div>
+                            <p style={{ color: '#94a3b8', fontSize: '0.875rem' }}>
+                                120 total terms • ~15 terms per month • Track both sets simultaneously
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<AIQuickProfessionalTerms />);
+    </script>
+</body>
+</html>
